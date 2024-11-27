@@ -1,35 +1,70 @@
-def vertex_cover_approx(graph):
-    # Initialize the vertex cover set
-    vertex_cover = set()
-    
-    # Create a copy of the graph (adjacency list)
-    edges = set()
-    for u in graph:
-        for v in graph[u]:
-            if u < v:  # To avoid duplicates, consider each edge only once
-                edges.add((u, v))
-    
-    # Greedily select edges and add both vertices to the vertex cover
-    while edges:
-        # Pick an arbitrary edge (u, v)
-        u, v = edges.pop()
-        
-        # Add both u and v to the vertex cover
-        vertex_cover.add(u)
-        vertex_cover.add(v)
-        
-        # Remove all edges incident to u or v
-        edges = {e for e in edges if u not in e and v not in e}
-    
-    return vertex_cover
+from random import choice
 
-# Example usage:
-graph = {
-    1: [2, 3],
-    2: [1, 4],
-    3: [1],
-    4: [2]
-}
+class Node:
+    def __init__(self, name):
+        self.name = name
+        self.d = float('inf')
+        self.pi = None
 
-vertex_cover = vertex_cover_approx(graph)
-print(f"Vertex Cover: {vertex_cover}")
+    def __lt__(self, other):
+        return self.d < other.d
+    
+    def __repr__(self):
+        return f"Node({self.name})"
+
+class Graph:
+    def __init__(self):
+        self.V = []
+        self.E = []
+        self.adj = {}
+
+def approx_vertex_cover(G):
+    C = set()
+    E0 = G.E[:]
+    while E0:
+        u, v = choice(E0)
+        C.add(u)
+        C.add(v)
+        
+        E0 = [e for e in E0 if u not in e and v not in e]
+    
+    return C
+
+def main():
+    G = Graph()
+    while True:
+        v_name = input('Enter vertice name:')
+        if v_name == 'exit':
+            break
+        if not any(node.name == v_name for node in G.V):
+            u = Node(v_name)
+            G.V.append(u)
+            G.adj[u] = []
+        else:
+            print('Node already exists')
+            continue
+    while True:
+        edge = input("Enter edge source, target and weight:")
+        if edge == 'exit':
+            break
+        u, v= edge.split()
+        U = next((i for i in G.V if i.name == u), None)
+        V = next((i for i in G.V if i.name == v), None)
+        if not U or not V:
+            print('Node doesnt exist')
+            exit()
+        if (U, V) in G.E:
+            print('Edge already exists, do you want to update weight?')
+            choice = input()
+            if choice == 'n':
+                continue
+        G.E.append((U, V))
+        G.adj[U] = G.adj[U] + [V]
+        G.E.append((V, U))
+        G.adj[V] = G.adj[V] + [U]
+    cover_vertices = approx_vertex_cover(G)
+    print(f"Vertex Cover solution: {cover_vertices}")
+    print(f"Size of vertex cover: {len(cover_vertices)}")
+
+if __name__ == '__main__':
+    main()
