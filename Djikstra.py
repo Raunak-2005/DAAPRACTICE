@@ -1,70 +1,71 @@
 import heapq
 
+class Node:
+    def __init__(self, value):
+        self.value = value
+        self.d = float('inf')  # Distance initialized to infinity
+        self.pd = None         # Parent node for path reconstruction
+
 class Graph:
     def __init__(self):
-        # Dictionary to store the graph as an adjacency list
-        self.adj_list = {}
+        self.E = []  # List of edges
+        self.V = []  # List of nodes
+        self.adj = {}  # Adjacency list
 
-    def add_edge(self, u, v, weight):
-        """Adds a weighted edge between vertices u and v."""
-        if u not in self.adj_list:
-            self.adj_list[u] = []
-        if v not in self.adj_list:
-            self.adj_list[v] = []
-        self.adj_list[u].append((v, weight))
-        self.adj_list[v].append((u, weight))  # For undirected graph; remove for directed graphs
+def Relax(u, v, w):
+    """Relax operation to update the shortest path estimate."""
+    if u.d + w < v.d:
+        v.d = u.d + w
+        v.pd = u
 
-    def dijkstra(self, start):
-        """Finds shortest paths from `start` to all other nodes and tracks the path."""
-        # Priority queue to store (distance, node)
-        pq = [(0, start)]
-        # Dictionary to store the shortest distances from start to each node
-        distances = {node: float('inf') for node in self.adj_list}
-        distances[start] = 0
-        # Dictionary to store the previous node for each node (for path reconstruction)
-        previous_nodes = {node: None for node in self.adj_list}
-        # Set to keep track of visited nodes
-        visited = set()
+def dijkstra(G, start):
+    """Dijkstra's algorithm implementation."""
+    start.d = 0  # Distance to the starting node is 0
 
-        while pq:
-            current_distance, current_node = heapq.heappop(pq)
+    # Priority queue to store (distance, node)
+    pq = []
+    heapq.heappush(pq, (start.d, start))
 
-            if current_node in visited:
-                continue
-            visited.add(current_node)
+    while pq:
+        current_distance, u = heapq.heappop(pq)
 
-            for neighbor, weight in self.adj_list[current_node]:
-                distance = current_distance + weight
-                if distance < distances[neighbor]:
-                    distances[neighbor] = distance
-                    previous_nodes[neighbor] = current_node
-                    heapq.heappush(pq, (distance, neighbor))
+        # If the current distance is greater than the recorded one, skip
+        if current_distance > u.d:
+            continue
 
-        return distances, previous_nodes
+        # Relax edges of u
+        for v_value, weight in G.adj[u.value]:
+            v = next(node for node in G.V if node.value == v_value)  # Find the actual node object
+            Relax(u, v, weight)
+            heapq.heappush(pq, (v.d, v))
 
-    def get_path(self, start, end, previous_nodes):
-        """Reconstructs the shortest path from start to end using the previous_nodes dictionary."""
-        path = []
-        current_node = end
-        while current_node is not None:
-            path.append(current_node)
-            current_node = previous_nodes[current_node]
-        path.reverse()
-        return path if path[0] == start else []
+# Graph initialization
+G = Graph()
+val = [1, 2, 3, 4]  # Node values
+Edges = [(1, 2, 10), (1, 4, 15), (2, 3, 15), (3, 4, 20)]  # (u, v, weight)
+Nodes = [Node(x) for x in val]
 
-# Example Usage
-g = Graph()
-g.add_edge(1, 2, 1)
-g.add_edge(1, 3, 4)
-g.add_edge(2, 3, 2)
-g.add_edge(2, 4, 6)
-g.add_edge(3, 4, 3)
+for i in Nodes:
+    G.V.append(i)
+    G.adj[i.value] = []  # Initialize adjacency list for each node
 
-start_node = 1
-distances, previous_nodes = g.dijkstra(start_node)
+for u, v, w in Edges:
+    G.E.append((u, v, w))
+    G.adj[u].append((v, w))  # Add edge to adjacency list (directed)
+    G.adj[v].append((u, w))  # For undirected graph
 
-# Print shortest distances and paths to each node
-for node in g.adj_list:
-    if distances[node] < float('inf'):
-        path = g.get_path(start_node, node, previous_nodes)
-        print(f"Shortest distance from {start_node} to {node}: {distances[node]}, Path: {path}")
+# Run Dijkstra's algorithm
+start_node = next(node for node in G.V if node.value == 1)
+dijkstra(G, start_node)
+
+# Print shortest distances and paths
+print("Node\tDistance from Start\tPath")
+for node in G.V:
+    # Reconstruct the path
+    path = []
+    current = node
+    while current:
+        path.append(current.value)
+        current = current.pd
+    path.reverse()
+    print(f"{node.value}\t{node.d}\t\t\t{path}")
