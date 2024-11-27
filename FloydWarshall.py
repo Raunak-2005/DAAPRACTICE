@@ -2,9 +2,17 @@ def floyd_warshall_with_paths(graph):
     # Number of vertices in the graph
     V = len(graph)
 
-    # Initialize the distance matrix and predecessor matrix
+    # Initialize the distance matrix as a copy of the graph
     dist = [row[:] for row in graph]
-    pred = [[None if graph[i][j] == float('inf') else i for j in range(V)] for i in range(V)]
+
+    # Initialize the predecessor matrix with None for all pairs
+    pred = [[None for _ in range(V)] for _ in range(V)]
+
+    # Set the predecessors for direct edges
+    for i in range(V):
+        for j in range(V):
+            if graph[i][j] != float('inf') and i != j:  # Direct edge exists
+                pred[i][j] = i
 
     # Apply the Floyd-Warshall algorithm
     for k in range(V):
